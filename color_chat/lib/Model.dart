@@ -2,8 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
 
-import 'main.dart';
-
 class ColorChatModel extends Model {
   BuildContext rootCtx; // used for dialogs
   Directory docsDir;
@@ -29,22 +27,32 @@ class ColorChatModel extends Model {
 
   // methods
   void setUserName(String inUserName) {
-    userName = inUserName;
+    this.userName = inUserName;
+    notifyListeners();
+  }
+
+  void setRoomName(String inRoomName) {
+    this.roomName = inRoomName;
+    notifyListeners();
+  }
+
+  void setWelcomeMsg(String s) {
+    this.welcomeMsg = s;
     notifyListeners();
   }
 
   void setAdmin(bool state) {
-    admin = state;
+    this.admin = state;
     notifyListeners();
   }
 
   void disEnableRoom(bool state) {
-    roomEnabled = state;
+    this.roomEnabled = state;
     notifyListeners();
   }
 
   void addMessage(final String inUser, final String inMsg) {
-    messages.add({"userName": inUser, "message": inMsg});
+    this.messages.add({"userName": inUser, "message": inMsg});
     notifyListeners();
   }
 
