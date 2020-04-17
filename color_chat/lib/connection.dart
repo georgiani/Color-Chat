@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_socket_io/flutter_socket_io.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
 
-String serverURL = "http://192.168.9.42";
+String serverURL = "http://192.168.1.1:8080";
 SocketIO _io;
 
 void showPleaseWait() {
@@ -54,7 +54,7 @@ void hidePleaseWait() {
   Navigator.of(chatModel.rootCtx).pop(); // pop the dialog
 }
 
-void connectToServer(final BuildContext mainCtx, final Function callback) {
+void connectToServer(final Function callback) {
   _io = SocketIOManager().createSocketIO(serverURL, "/", query: "",
       socketStatusCallback: (dataIn) {
     if (dataIn == "connect") {
@@ -272,7 +272,6 @@ void joined(dataIn) {
   }
 }
 
-// TODO: review
 void left(dataIn) {
   Map<String, dynamic> payload = jsonDecode(dataIn);
 
