@@ -20,8 +20,8 @@ const rooms = {};
 const io = require("socket.io") (
     require("http").createServer(
         function() {}
-    ).listen(8080, () => {
-        console.log("listening on 8080");
+    ).listen(80, () => {
+        console.log("Listening on port 80");
     })
 );
 
@@ -34,17 +34,17 @@ io.on(
             (dataIn, callback) => {
                 if (users[dataIn.userName]) { // if the user exists
                     // then validate the password
-                    if (user.password == dataIn.password) { 
-                        callback({status: "ok"});
+                    if (users[dataIn.userName].password == dataIn.password) { 
+                        callback({status : "ok"});
                     } else {
-                        callback({status: "fail"});
+                        callback({status : "fail"});
                     }
                 } else {
                     // if the user doesn't exists
                     // then map his username to his account
                     users[dataIn.userName] = dataIn; 
                     io.broadcast.emit("newUser", users);
-                    callback({status: "created"});
+                    callback({status : "created"});
                 }
             }
         );
@@ -106,6 +106,7 @@ io.on(
         io.on(
             "post",
             (dataIn, callback) => {
+                console.log(dataIn);
                 io.broadcast.emit("posted", dataIn);
                 callback({status: "ok"});
             }

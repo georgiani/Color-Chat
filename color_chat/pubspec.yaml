@@ -9,7 +9,7 @@ dependencies:
   flutter:
     sdk: flutter
   scoped_model: ^1.0.1
-  flutter_socket_io: ^0.6.0
+  adhara_socket_io: ^0.4.1
   cupertino_icons: ^0.1.3
   path_provider: ^1.6.5
 

@@ -18,7 +18,7 @@ class ColorChatModel extends Model {
   List messages;
   bool admin;
   
-  // lists for this session, not reffered to rooms
+  // lists for this session
   List users;
   List rooms;
 

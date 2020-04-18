@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'package:color_chat/Model.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_socket_io/flutter_socket_io.dart';
-import 'package:flutter_socket_io/socket_io_manager.dart';
+import 'package:adhara_socket_io/adhara_socket_io.dart';
 
-String serverURL = "http://192.168.1.1:8080";
+String serverURL = "http://192.168.1.155:80";
 SocketIO _io;
 
 void showPleaseWait() {
@@ -54,23 +53,21 @@ void hidePleaseWait() {
   Navigator.of(chatModel.rootCtx).pop(); // pop the dialog
 }
 
-void connectToServer(final Function callback) {
-  _io = SocketIOManager().createSocketIO(serverURL, "/", query: "",
-      socketStatusCallback: (dataIn) {
-    if (dataIn == "connect") {
-      // listen to the broadcasts (messages from the server)
-      _io.subscribe("newUser", newUser);
-      _io.subscribe("created", created);
-      _io.subscribe("closed", closed);
-      _io.subscribe("joined", joined);
-      _io.subscribe("left", left);
-      _io.subscribe("kicked", kicked);
-      _io.subscribe("invited", invited);
-      _io.subscribe("posted", posted);
-      callback();
-    }
+void connectToServer(final Function callback) async {
+  _io = await SocketIOManager().createInstance(SocketOptions(serverURL));
+  _io.onConnect((dataIn) {
+    // listen to the broadcasts (messages from the server)
+    _io.on("newUser", newUser);
+    _io.on("created", created);
+    _io.on("closed", closed);
+    _io.on("joined", joined);
+    _io.on("left", left);
+    _io.on("kicked", kicked);
+    _io.on("invited", invited);
+    _io.on("posted", posted);
+    callback();
   });
-  _io.init();
+  
   _io.connect();
 }
 
@@ -83,16 +80,11 @@ void validate(
   showPleaseWait();
 
   // operation, dataIn, callBack
-  _io.sendMessage(
-      "validate",
-      "{ \"userName\" : \"$inUserName\", "
-          "  \"password\" : \"$inPass\" }", (dataIn) {
-    // when the server finishes
-    Map<String, dynamic> response =
-        jsonDecode(dataIn); // decode the data given back in
-    // the callback (that is also json)
+  _io.emitWithAck("validate", [
+    {"userName": inUserName, "password": inPass}
+  ]).then((dataIn) {
     hidePleaseWait(); // hide the dialog
-    callback(response["status"]);
+    callback(dataIn[0]);
   });
 }
 
@@ -100,25 +92,21 @@ void validate(
 void listRooms(final Function callback) {
   showPleaseWait();
 
-  _io.sendMessage(
-      "listRooms", // the method from the server
-      "{}", // the dataIn for it
+  _io.emitWithAck("listRooms", // the method from the server
+      [{}]).then(// the dataIn for it
       (dataIn) {
     // what I get back
-    Map<String, dynamic> response =
-        jsonDecode(dataIn); // decode the json response
     hidePleaseWait();
-    callback(response); // use it somehow
+    callback(dataIn[0]); // use it somehow
   });
 }
 
 void listUsers(final Function callback) {
   showPleaseWait();
 
-  _io.sendMessage("listUsers", "{}", (dataIn) {
-    Map<String, dynamic> response = jsonDecode(dataIn);
+  _io.emitWithAck("listUsers", [{}]).then((dataIn) {
     hidePleaseWait();
-    callback(response);
+    callback(dataIn[0]);
   });
 }
 
@@ -130,19 +118,20 @@ void create(
     final String inCreator,
     final Function callback) {
   showPleaseWait();
-
-  _io.sendMessage(
-      "create",
-      "{ \"roomName\" : \"$inRoomName\", "
-          "  \"description\" : \"$inDescription\", "
-          "  \"maxPeople\" : \"$inMaxPeople\", "
-          "  \"private\" : \"$inPrivate\", "
-          "  \"creator\" : \"$inCreator\" }", (dataIn) {
-    Map<String, dynamic> response =
-        jsonDecode(dataIn); // {status: "exists|created",
+  _io.emitWithAck("create", [
+    {
+      "roomName": inRoomName,
+      "description": inDescription,
+      "maxPeople": inMaxPeople,
+      "private": inPrivate,
+      "creator": inCreator
+    }
+  ]).then((dataIn) {
+    // {status: "exists|created",
     // rooms: complete list of rooms with the new one if status == created}
+
     hidePleaseWait();
-    callback(response);
+    callback(dataIn[0]);
   });
 }
 
@@ -150,13 +139,11 @@ void join(
     final String inUserName, final String inRoomName, final Function callback) {
   showPleaseWait();
 
-  _io.sendMessage(
-      "join",
-      "{ \"userName\" : \"$inUserName\","
-          "  \"roomName\" : \"$inRoomName\" }", (dataIn) {
-    Map<String, dynamic> results = jsonDecode(dataIn);
+  _io.emitWithAck("join", [
+    {"userName": inUserName, "roomName": inRoomName}
+  ]).then((dataIn) {
     hidePleaseWait();
-    callback(results);
+    callback(dataIn[0]);
   });
 }
 
@@ -164,14 +151,11 @@ void post(final String inUserName, final String inRoomName,
     final String inMessage, final Function callback) {
   showPleaseWait();
 
-  _io.sendMessage(
-      "post",
-      "{ \"userName\" : \"$inUserName\","
-          "  \"roomName\" : \"$inRoomName\","
-          "  \"message\" : \"$inMessage\" }", (dataIn) {
-    Map<String, dynamic> results = jsonDecode(dataIn);
+  _io.emitWithAck("post", [
+    {"userName": inUserName, "roomName": inRoomName, "message": inMessage}
+  ]).then((dataIn) {
     hidePleaseWait();
-    callback(results["status"]);
+    callback(dataIn[0]);
   });
 }
 
@@ -179,12 +163,15 @@ void invite(final String inviterUserName, final String invitedUserName,
     final String inRoomName, final Function callback) {
   showPleaseWait();
 
-  _io.sendMessage(
-      "invite",
-      "{ \"inviterUserName\" : \"$inviterUserName\","
-          "  \"roomName\" : \"$inRoomName\","
-          "  \"invitedUserName\" : \"$invitedUserName\" }", (dataIn) {
+  _io.emitWithAck("invite", [
+    {
+      "inviterUserName": inviterUserName,
+      "roomName": inRoomName,
+      "invitedUserName": invitedUserName
+    }
+  ]).then((dataIn) {
     hidePleaseWait();
+    callback();
   });
 }
 
@@ -192,19 +179,22 @@ void leave(
     final String inUserName, final String inRoomName, final Function callback) {
   showPleaseWait();
 
-  _io.sendMessage(
-      "leave",
-      "{ \"userName\" : \"$inUserName\","
-          "  \"roomName\" : \"$inRoomName\" }", (dataIn) {
+  _io.emitWithAck("leave", [
+    {"userName": inUserName, "roomName": inRoomName}
+  ]).then((dataIn) {
     hidePleaseWait();
+    callback();
   });
 }
 
 void close(final String inRoomName, final Function callback) {
   showPleaseWait();
 
-  _io.sendMessage("close", "{ \"roomName\" : \"$inRoomName\" }", (dataIn) {
+  _io.emitWithAck("close", [
+    {"roomName": inRoomName}
+  ]).then((dataIn) {
     hidePleaseWait();
+    callback();
   });
 }
 
@@ -212,11 +202,11 @@ void kick(
     final String inUserName, final String inRoomName, final Function callback) {
   showPleaseWait();
 
-  _io.sendMessage(
-      "kick",
-      "{ \"userName\" : \"$inUserName\","
-          "  \"roomName\" : \"$inRoomName\" }", (dataIn) {
+  _io.emitWithAck("kick", [
+    {"userName": inUserName, "roomName": inRoomName}
+  ]).then((dataIn) {
     hidePleaseWait();
+    callback();
   });
 }
 //########### Client Message Handlers
@@ -284,11 +274,10 @@ void left(dataIn) {
 
 // dataIn rooms[dataIn.roomName]
 void kicked(dataIn) {
-  Map<String, dynamic> payload = jsonDecode(dataIn);
 
   // cleanup because he will see the room
   // as closed
-  chatModel.removeInvite(payload["roomName"]);
+  chatModel.removeInvite(dataIn["roomName"]);
   chatModel.setUsers({});
   chatModel.setRoomName(ColorChatModel.notInARoom);
   chatModel.disEnableRoom(false);
@@ -302,10 +291,8 @@ void kicked(dataIn) {
 
 //dataIn -> inviter, invited, room
 void invited(dataIn) async {
-  Map<String, dynamic> payload = jsonDecode(dataIn);
-
-  String roomName = payload["roomName"];
-  String inviterName = payload["inviterUserName"];
+  String roomName = dataIn["roomName"];
+  String inviterName = dataIn["inviterUserName"];
 
   chatModel.addInvite(roomName);
 
@@ -326,8 +313,7 @@ void invited(dataIn) async {
 
 // dataIn -> user, message, room
 void posted(dataIn) {
-  Map<String, dynamic> payload = jsonDecode(dataIn);
-  if (chatModel.roomName == payload["roomName"]) {
-    chatModel.addMessage(payload["userName"], payload["message"]);
+  if (chatModel.roomName == dataIn["roomName"] && chatModel.userName != dataIn["userName"]) {
+    chatModel.addMessage(dataIn["userName"], dataIn["message"]);
   }
 }
