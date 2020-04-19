@@ -1,6 +1,7 @@
-import 'package:color_chat/Model.dart';
+import 'package:color_chat/ModelAndServer/Model.dart';
 import 'package:flutter/material.dart';
-import 'connection.dart' as conn;
+import 'ModelAndServer/connection.dart' as conn;
+import 'package:random_color/random_color.dart';
 
 final GlobalKey<FormState> _loginKey = new GlobalKey<FormState>();
 
@@ -9,6 +10,8 @@ class LoginDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    RandomColor _rand = RandomColor();
+
     return AlertDialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20.0),
@@ -107,6 +110,12 @@ class LoginDialog extends StatelessWidget {
                     // user exists, log in
                     chatModel.setUserName(_userName);
                     Navigator.of(chatModel.rootCtx).pop(); // pop the dialog
+
+                    Color _col = _rand.randomColor(
+                      colorSaturation: ColorSaturation.highSaturation,
+                    );
+
+                    chatModel.setChatColor(_col);
                     chatModel.setWelcomeMsg("Welcome back, $_userName!");
                   } else if (dataIn["status"] == "fail") {
                     // username exists and user is trying to register

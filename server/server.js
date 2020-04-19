@@ -88,6 +88,7 @@ io.on(
 
                 // if the number of users in the room is >= maxpeople of the room
                 // then the status is "full"
+                console.log(room.users);
                 if (Object.keys(room.users).length >= room.maxPeople) {
                     callback({status: "full"});
                 } else {
@@ -140,15 +141,6 @@ io.on(
                 io.broadcast.emit("closed", {roomName: dataIn.roomName, rooms: rooms});
                 callback(rooms);
             }
-        );
-
-        io.on(
-            "kick",
-            (dataIn, callback) => {
-                delete rooms[dataIn.roomName].users[dataIn.userName];
-                io.broadcast.emit("kicked", rooms[dataIn.roomName]);
-                callback({status: "ok"});
-            }            
         );
     }
 );

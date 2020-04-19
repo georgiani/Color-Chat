@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:color_chat/Model.dart';
+import 'package:color_chat/ModelAndServer/Model.dart';
 import 'package:flutter/material.dart';
 import 'package:adhara_socket_io/adhara_socket_io.dart';
 
@@ -62,7 +62,6 @@ void connectToServer(final Function callback) async {
     _io.on("closed", closed);
     _io.on("joined", joined);
     _io.on("left", left);
-    _io.on("kicked", kicked);
     _io.on("invited", invited);
     _io.on("posted", posted);
     callback();
@@ -148,11 +147,11 @@ void join(
 }
 
 void post(final String inUserName, final String inRoomName,
-    final String inMessage, final Function callback) {
+    final String inMessage, final Color msgColor, final Function callback) {
   showPleaseWait();
 
   _io.emitWithAck("post", [
-    {"userName": inUserName, "roomName": inRoomName, "message": inMessage}
+    {"userName": inUserName, "roomName": inRoomName, "message": inMessage, "color" : msgColor.value}
   ]).then((dataIn) {
     hidePleaseWait();
     callback(dataIn[0]);
@@ -198,17 +197,6 @@ void close(final String inRoomName, final Function callback) {
   });
 }
 
-void kick(
-    final String inUserName, final String inRoomName, final Function callback) {
-  showPleaseWait();
-
-  _io.emitWithAck("kick", [
-    {"userName": inUserName, "roomName": inRoomName}
-  ]).then((dataIn) {
-    hidePleaseWait();
-    callback();
-  });
-}
 //########### Client Message Handlers
 // received from the server through broadcasts (all users)
 
@@ -272,22 +260,6 @@ void left(dataIn) {
   }
 }
 
-// dataIn rooms[dataIn.roomName]
-void kicked(dataIn) {
-
-  // cleanup because he will see the room
-  // as closed
-  chatModel.removeInvite(dataIn["roomName"]);
-  chatModel.setUsers({});
-  chatModel.setRoomName(ColorChatModel.notInARoom);
-  chatModel.disEnableRoom(false);
-  chatModel.setWelcomeMsg("You got kicked from the room.");
-
-  // goes to "/" then removes all the previous
-  // routes until ModalRoute.withName("/") is true
-  Navigator.of(chatModel.rootCtx)
-      .pushNamedAndRemoveUntil("/", ModalRoute.withName("/"));
-}
 
 //dataIn -> inviter, invited, room
 void invited(dataIn) async {
@@ -314,6 +286,6 @@ void invited(dataIn) async {
 // dataIn -> user, message, room
 void posted(dataIn) {
   if (chatModel.roomName == dataIn["roomName"] && chatModel.userName != dataIn["userName"]) {
-    chatModel.addMessage(dataIn["userName"], dataIn["message"]);
+    chatModel.addMessage(dataIn["userName"], dataIn["message"], Color(dataIn["color"]));
   }
 }

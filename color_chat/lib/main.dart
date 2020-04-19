@@ -2,7 +2,7 @@ import "package:flutter/material.dart";
 import "package:scoped_model/scoped_model.dart";
 import 'HomeScreen.dart';
 import 'LoginDialog.dart';
-import 'Model.dart';
+import 'ModelAndServer/Model.dart';
 import 'Routes/CreateRoom.dart';
 import 'Routes/Lobby.dart';
 import 'Routes/Room.dart';

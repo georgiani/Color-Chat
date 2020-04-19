@@ -10,6 +10,7 @@ class ColorChatModel extends Model {
   // reffered to user using the client
   String userName = "";
   Map invites = {};
+  Color chatColor = Colors.white;
 
   // all of these refer to the current room
   String roomName = notInARoom;
@@ -28,6 +29,11 @@ class ColorChatModel extends Model {
   // methods
   void setUserName(String inUserName) {
     this.userName = inUserName;
+    notifyListeners();
+  }
+
+  void setChatColor(Color c) {
+    this.chatColor = c;
     notifyListeners();
   }
 
@@ -51,8 +57,8 @@ class ColorChatModel extends Model {
     notifyListeners();
   }
 
-  void addMessage(final String inUser, final String inMsg) {
-    this.messages.add({"userName": inUser, "message": inMsg});
+  void addMessage(final String inUser, final String inMsg, final Color messageColor) {
+    this.messages.add({"userName": inUser, "message": inMsg, "color": messageColor});
     notifyListeners();
   }
 

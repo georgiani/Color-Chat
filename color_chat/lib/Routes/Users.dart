@@ -1,5 +1,5 @@
 import 'package:color_chat/AppDrawer.dart';
-import 'package:color_chat/Model.dart';
+import 'package:color_chat/ModelAndServer/Model.dart';
 import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
 
