@@ -3,7 +3,7 @@ import 'package:color_chat/ModelAndServer/Model.dart';
 import 'package:flutter/material.dart';
 import 'package:adhara_socket_io/adhara_socket_io.dart';
 
-String serverURL = "http://192.168.1.155:80";
+String serverURL; //ip adress on port 80
 SocketIO _io;
 
 void showPleaseWait() {
